@@ -1,0 +1,7 @@
+{
+  "name": "Từ vựng Global",
+  "description": "An interactive 3D English vocabulary learning app for Vietnamese secondary students (Grades 6-9) following the Global Success curriculum.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
