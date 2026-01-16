@@ -1,12 +1,11 @@
 
 {
+  "version": 2,
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "framework": null,
-  "installCommand": "npm install",
-  "buildCommand": "echo 'No build needed for this esm project'"
+  ]
 }
