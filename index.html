@@ -12,16 +12,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap');
         body {
             font-family: 'Lexend', sans-serif;
-            background: radial-gradient(circle at center, #f0f9ff 0%, #e0f2fe 100%);
+            background: radial-gradient(circle at center, #f0f9ff 0%, #dcf0ff 100%);
             min-height: 100vh;
             margin: 0;
             overflow-x: hidden;
         }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
         }
         .animate-float {
             animation: float 3s ease-in-out infinite;
@@ -37,7 +37,7 @@
         }
         .card-3d:hover {
             transform: translateY(-5px) rotateX(2deg) rotateY(2deg);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
         }
         @keyframes score-up {
           0% { transform: translateY(0) scale(1); opacity: 1; }
