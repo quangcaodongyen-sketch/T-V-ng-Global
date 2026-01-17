@@ -221,7 +221,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
 
         {/* Khu vực trả lời - Tối ưu cho Mobile */}
         <div className="flex-grow flex flex-col justify-center gap-3">
-          {currentQ.type === ExerciseType.MULTIPLE_CHOICE && (
+          {currentQ.type === ExerciseType.MULTIPLE_CHOICE && !feedback && (
             <div className="grid grid-cols-1 gap-3">
               {currentQ.options?.map((opt, i) => {
                 const color = ANSWER_COLORS[i % ANSWER_COLORS.length];
@@ -229,11 +229,8 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                   <button 
                     key={i}
                     onClick={() => handleAnswer(opt)}
-                    disabled={!!feedback}
                     className={`group p-4 sm:p-5 rounded-2xl text-left font-bold border-b-4 transition-all flex items-center gap-4
-                      ${feedback 
-                        ? (opt === currentQ.answer ? 'bg-green-500 border-green-700 text-white scale-[1.02]' : 'bg-gray-50 border-gray-200 text-gray-300') 
-                        : `${color.bg} ${color.shadow} ${color.text} active:translate-y-1 active:border-b-0`}`}
+                       ${color.bg} ${color.shadow} ${color.text} active:translate-y-1 active:border-b-0`}
                   >
                     <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-base font-black bg-white/20">
                       {String.fromCharCode(65 + i)}
@@ -245,7 +242,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
             </div>
           )}
 
-          {currentQ.type === ExerciseType.FILL_BLANK && (
+          {currentQ.type === ExerciseType.FILL_BLANK && !feedback && (
             <div className="flex flex-col items-center gap-6">
               <input 
                 type="text" 
@@ -254,48 +251,45 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                 onChange={(e) => setFillValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAnswer(fillValue)}
                 placeholder="..."
-                disabled={!!feedback}
                 className="w-full text-center px-6 py-5 rounded-2xl border-4 outline-none font-black text-3xl uppercase tracking-widest transition-all border-blue-100 bg-white focus:border-blue-500 text-blue-900"
               />
-              {!feedback && (
-                <button 
-                  onClick={() => handleAnswer(fillValue)}
-                  className="w-full bg-blue-600 text-white py-4 sm:py-5 rounded-2xl font-black text-lg shadow-lg active:translate-y-1"
-                >
-                  GỬI ĐÁP ÁN <i className="fa-solid fa-paper-plane ml-2"></i>
-                </button>
+              <button 
+                onClick={() => handleAnswer(fillValue)}
+                className="w-full bg-blue-600 text-white py-4 sm:py-5 rounded-2xl font-black text-lg shadow-lg active:translate-y-1"
+              >
+                GỬI ĐÁP ÁN <i className="fa-solid fa-paper-plane ml-2"></i>
+              </button>
+            </div>
+          )}
+
+          {/* Feedback area - Hiển thị khi đã trả lời */}
+          {feedback && (
+            <div className={`p-4 sm:p-5 rounded-3xl border-2 transition-all shadow-lg ${feedback.isCorrect ? 'bg-green-50 border-green-100' : 'bg-pink-50 border-pink-100'} animate-in zoom-in-95 duration-300`}>
+              <div className="flex items-center gap-4">
+                <div className={`text-4xl ${feedback.isCorrect ? 'text-green-500' : 'text-pink-400'}`}>
+                  <i className={feedback.isCorrect ? "fa-solid fa-circle-check" : "fa-solid fa-circle-info"}></i>
+                </div>
+                <div className="text-left">
+                  <p className="text-base font-black text-blue-900">{feedback.text}</p>
+                  {feedback.explanation && <p className="text-xs font-bold text-blue-400 mt-1">{feedback.explanation}</p>}
+                </div>
+              </div>
+              
+              {feedback.word && feedback.meaning && (
+                <div className="mt-2">
+                  <AITutor word={feedback.word} meaning={feedback.meaning} />
+                </div>
               )}
+
+              <button 
+                onClick={nextQuestion}
+                className={`mt-6 w-full py-4 rounded-xl font-black text-white text-lg shadow-md transition-all active:scale-95 ${feedback.isCorrect ? 'bg-green-500' : 'bg-blue-600'}`}
+              >
+                TIẾP TỤC <i className="fa-solid fa-chevron-right ml-1"></i>
+              </button>
             </div>
           )}
         </div>
-
-        {/* Feedback area */}
-        {feedback && (
-          <div className={`mt-6 p-4 sm:p-5 rounded-3xl border-2 transition-all shadow-lg ${feedback.isCorrect ? 'bg-green-50 border-green-100' : 'bg-pink-50 border-pink-100'}`}>
-            <div className="flex items-center gap-4">
-              <div className={`text-4xl ${feedback.isCorrect ? 'text-green-500' : 'text-pink-400'}`}>
-                <i className={feedback.isCorrect ? "fa-solid fa-circle-check" : "fa-solid fa-circle-info"}></i>
-              </div>
-              <div className="text-left">
-                <p className="text-base font-black text-blue-900">{feedback.text}</p>
-                {feedback.explanation && <p className="text-xs font-bold text-blue-400 mt-1">{feedback.explanation}</p>}
-              </div>
-            </div>
-            
-            {feedback.word && feedback.meaning && (
-              <div className="mt-2 scale-95 origin-top">
-                <AITutor word={feedback.word} meaning={feedback.meaning} />
-              </div>
-            )}
-
-            <button 
-              onClick={nextQuestion}
-              className={`mt-4 w-full py-4 rounded-xl font-black text-white text-lg shadow-md ${feedback.isCorrect ? 'bg-green-500' : 'bg-blue-600'}`}
-            >
-              TIẾP TỤC <i className="fa-solid fa-chevron-right ml-1"></i>
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
