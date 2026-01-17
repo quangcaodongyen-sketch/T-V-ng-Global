@@ -46,8 +46,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               <i className="fa-solid fa-user-astronaut"></i>
             )}
           </div>
-          <h1 className="text-2xl font-black text-blue-900 mb-1 leading-none">AI TUTOR MASTER</h1>
-          <p className="text-blue-500 font-bold text-[10px] tracking-widest uppercase">Global Success Program</p>
+          <h1 className="text-xl font-black text-blue-900 mb-2 leading-tight uppercase">TỪ VỰNG TIẾNG ANH GLOBAL SUCCESS</h1>
+          <p className="text-blue-500 font-bold text-[11px] leading-relaxed">Hãy chinh phục từ vựng Tiếng Anh cùng thầy Đinh Thành các em nhé!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
@@ -99,7 +99,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             </label>
           </div>
 
-          <div className="p-4 bg-blue-100/50 rounded-[2rem] border-2 border-blue-50 space-y-3 mt-2">
+          <div className="p-4 bg-[#e0f2fe] rounded-[2rem] border-2 border-blue-100 space-y-3 mt-2">
             <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest block text-center">Hình thức học tập</label>
             <div className="flex flex-col gap-2">
               <button 
@@ -125,7 +125,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             type="submit"
             className="w-full bg-blue-700 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_#1e3a8a] active:shadow-none active:translate-y-[6px] transition-all uppercase tracking-widest mt-2 flex items-center justify-center gap-2"
           >
-            Sẵn sàng học <i className="fa-solid fa-arrow-right"></i>
+            Bắt đầu học <i className="fa-solid fa-arrow-right"></i>
           </button>
         </form>
       </div>

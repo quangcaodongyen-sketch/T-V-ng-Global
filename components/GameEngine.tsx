@@ -122,7 +122,9 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
   }, [stage, generateStageQuestions]);
 
   const handleAnswer = (answer: string) => {
-    if (feedback || !questions[currentIndex]) return;
+    // Critical fix: prevent execution if questions are not ready
+    if (feedback || questions.length === 0 || !questions[currentIndex]) return;
+    
     const currentQ = questions[currentIndex];
     const isCorrect = answer.toLowerCase().trim() === (currentQ.answer as string).toLowerCase().trim();
     const vocabItem = unit.vocab.find(v => v.word === currentQ.word);
@@ -170,7 +172,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
     return (
       <div className="flex flex-col items-center justify-center p-10 glass-panel rounded-3xl animate-pulse">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="font-bold text-blue-900">Chuẩn bị thử thách...</p>
+        <p className="font-bold text-blue-900">Đang tạo thử thách...</p>
       </div>
     );
   }
