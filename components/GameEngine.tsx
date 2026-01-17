@@ -122,7 +122,6 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
   }, [stage, generateStageQuestions]);
 
   const handleAnswer = (answer: string) => {
-    // Critical fix: prevent execution if questions are not ready
     if (feedback || questions.length === 0 || !questions[currentIndex]) return;
     
     const currentQ = questions[currentIndex];
@@ -167,7 +166,6 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
     }
   };
 
-  // Safe access check to prevent "Cannot read properties of undefined"
   if (questions.length === 0 || !questions[currentIndex]) {
     return (
       <div className="flex flex-col items-center justify-center p-10 glass-panel rounded-3xl animate-pulse">
@@ -180,7 +178,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="w-full max-w-lg px-4 py-4 relative flex flex-col min-h-[80vh] mobile-card">
+    <div className="w-full max-w-lg px-4 py-4 relative flex flex-col min-h-[85vh] mobile-card">
       {showScoreEffect && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100]">
           <span className="text-6xl font-black text-pink-500 animate-score flex items-center gap-2 drop-shadow-2xl bg-white px-8 py-3 rounded-full border-4 border-pink-100">
@@ -189,16 +187,18 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
         </div>
       )}
 
-      <div className="flex justify-between mb-4 gap-2">
+      {/* Tiến trình Stage */}
+      <div className="flex justify-between mb-6 gap-2">
         {[1, 2, 3, 4].map(s => (
           <div key={s} className="flex-1 flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black shadow-md transition-all ${stage === s ? 'bg-blue-600 text-white scale-110 border-2 border-white' : stage > s ? 'bg-green-500 text-white' : 'bg-blue-50 text-blue-200'}`}>
-              {stage > s ? <i className="fa-solid fa-check text-xs"></i> : s}
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black shadow-md transition-all ${stage === s ? 'bg-blue-600 text-white scale-110 border-2 border-white' : stage > s ? 'bg-green-500 text-white' : 'bg-blue-50 text-blue-200'}`}>
+              {stage > s ? <i className="fa-solid fa-check text-[10px]"></i> : s}
             </div>
           </div>
         ))}
       </div>
 
+      {/* Thông tin câu hỏi & điểm */}
       <div className="mb-4 flex items-center justify-between">
         <span className="text-[10px] font-black text-blue-600 uppercase bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-50">
           Câu {currentIndex + 1} / {QUESTIONS_PER_STAGE}
@@ -209,15 +209,20 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
         </div>
       </div>
 
-      <div className="glass-panel p-6 rounded-[2.5rem] shadow-xl border-4 border-white flex flex-col flex-grow relative overflow-hidden">
+      {/* Card nội dung chính */}
+      <div className="glass-panel p-5 sm:p-7 rounded-[2.5rem] shadow-xl border-4 border-white flex flex-col flex-grow relative overflow-hidden">
+        {/* Câu hỏi - Chữ to rõ ràng */}
         <div className="text-center mb-6">
-          <span className="text-[8px] font-black text-blue-300 uppercase tracking-widest mb-1 block">Unit {unit.id} • {unit.title}</span>
-          <h2 className="text-lg font-black text-blue-900 leading-tight">{currentQ.question}</h2>
+          <span className="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-2 block">Unit {unit.id} • {unit.title}</span>
+          <h2 className="text-xl sm:text-2xl font-black text-blue-900 leading-tight px-2">
+            {currentQ.question}
+          </h2>
         </div>
 
+        {/* Khu vực trả lời - Tối ưu cho Mobile */}
         <div className="flex-grow flex flex-col justify-center gap-3">
           {currentQ.type === ExerciseType.MULTIPLE_CHOICE && (
-            <div className="grid grid-cols-1 gap-2.5">
+            <div className="grid grid-cols-1 gap-3">
               {currentQ.options?.map((opt, i) => {
                 const color = ANSWER_COLORS[i % ANSWER_COLORS.length];
                 return (
@@ -225,15 +230,15 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                     key={i}
                     onClick={() => handleAnswer(opt)}
                     disabled={!!feedback}
-                    className={`group p-4 rounded-2xl text-left font-bold border-b-4 transition-all flex items-center gap-3
+                    className={`group p-4 sm:p-5 rounded-2xl text-left font-bold border-b-4 transition-all flex items-center gap-4
                       ${feedback 
                         ? (opt === currentQ.answer ? 'bg-green-500 border-green-700 text-white scale-[1.02]' : 'bg-gray-50 border-gray-200 text-gray-300') 
                         : `${color.bg} ${color.shadow} ${color.text} active:translate-y-1 active:border-b-0`}`}
                   >
-                    <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-black bg-white/20">
+                    <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-base font-black bg-white/20">
                       {String.fromCharCode(65 + i)}
                     </span>
-                    <span className="text-sm">{opt}</span>
+                    <span className="text-base sm:text-lg leading-snug">{opt}</span>
                   </button>
                 );
               })}
@@ -250,39 +255,44 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                 onKeyDown={(e) => e.key === 'Enter' && handleAnswer(fillValue)}
                 placeholder="..."
                 disabled={!!feedback}
-                className="w-full text-center px-6 py-4 rounded-2xl border-4 outline-none font-black text-2xl uppercase tracking-widest transition-all border-blue-100 bg-white focus:border-blue-500 text-blue-900"
+                className="w-full text-center px-6 py-5 rounded-2xl border-4 outline-none font-black text-3xl uppercase tracking-widest transition-all border-blue-100 bg-white focus:border-blue-500 text-blue-900"
               />
               {!feedback && (
                 <button 
                   onClick={() => handleAnswer(fillValue)}
-                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg active:translate-y-1"
+                  className="w-full bg-blue-600 text-white py-4 sm:py-5 rounded-2xl font-black text-lg shadow-lg active:translate-y-1"
                 >
-                  Xác nhận <i className="fa-solid fa-paper-plane ml-2"></i>
+                  GỬI ĐÁP ÁN <i className="fa-solid fa-paper-plane ml-2"></i>
                 </button>
               )}
             </div>
           )}
         </div>
 
+        {/* Feedback area */}
         {feedback && (
-          <div className={`mt-6 p-5 rounded-3xl border-2 transition-all shadow-lg ${feedback.isCorrect ? 'bg-green-50 border-green-100' : 'bg-pink-50 border-pink-100'}`}>
-            <div className="flex items-center gap-3">
-              <div className={`text-3xl ${feedback.isCorrect ? 'text-green-500' : 'text-pink-400'}`}>
+          <div className={`mt-6 p-4 sm:p-5 rounded-3xl border-2 transition-all shadow-lg ${feedback.isCorrect ? 'bg-green-50 border-green-100' : 'bg-pink-50 border-pink-100'}`}>
+            <div className="flex items-center gap-4">
+              <div className={`text-4xl ${feedback.isCorrect ? 'text-green-500' : 'text-pink-400'}`}>
                 <i className={feedback.isCorrect ? "fa-solid fa-circle-check" : "fa-solid fa-circle-info"}></i>
               </div>
               <div className="text-left">
-                <p className="text-sm font-black text-blue-900">{feedback.text}</p>
-                {feedback.explanation && <p className="text-[10px] font-bold text-blue-400 mt-0.5">{feedback.explanation}</p>}
+                <p className="text-base font-black text-blue-900">{feedback.text}</p>
+                {feedback.explanation && <p className="text-xs font-bold text-blue-400 mt-1">{feedback.explanation}</p>}
               </div>
             </div>
             
-            {feedback.word && feedback.meaning && <AITutor word={feedback.word} meaning={feedback.meaning} />}
+            {feedback.word && feedback.meaning && (
+              <div className="mt-2 scale-95 origin-top">
+                <AITutor word={feedback.word} meaning={feedback.meaning} />
+              </div>
+            )}
 
             <button 
               onClick={nextQuestion}
-              className={`mt-4 w-full py-3.5 rounded-xl font-black text-white shadow-md ${feedback.isCorrect ? 'bg-green-500' : 'bg-blue-600'}`}
+              className={`mt-4 w-full py-4 rounded-xl font-black text-white text-lg shadow-md ${feedback.isCorrect ? 'bg-green-500' : 'bg-blue-600'}`}
             >
-              Tiếp tục <i className="fa-solid fa-chevron-right ml-1"></i>
+              TIẾP TỤC <i className="fa-solid fa-chevron-right ml-1"></i>
             </button>
           </div>
         )}
