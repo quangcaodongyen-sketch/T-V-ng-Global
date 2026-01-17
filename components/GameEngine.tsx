@@ -1,8 +1,12 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Unit, ExerciseType, Question } from '../types';
 import { CHEERING_PHRASES, ENCOURAGING_PHRASES } from '../constants';
 import { audioService } from '../services/audioService';
 import AITutor from './AITutor';
+
+// Khai báo confetti là biến toàn cục
+declare var confetti: any;
 
 interface GameEngineProps {
   unit: Unit;
@@ -28,18 +32,22 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
 
   const QUESTIONS_PER_STAGE = mode === 'certificate' ? 25 : Math.min(10, unit.vocab.length);
   const TOTAL_STAGES = 4;
+  const POINTS_PER_ANSWER = 10;
 
   const firework = () => {
-    // @ts-ignore
-    confetti({
-      particleCount: 150,
-      spread: 80,
-      origin: { y: 0.6 },
-      colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899']
-    });
+    if (typeof confetti === 'function') {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899']
+      });
+    }
   };
 
   const generateStageQuestions = useCallback((currentStage: number) => {
+    if (!unit.vocab || unit.vocab.length === 0) return;
+
     let baseVocab = [...unit.vocab];
     while (baseVocab.length < QUESTIONS_PER_STAGE) {
       baseVocab = [...baseVocab, ...unit.vocab];
@@ -51,11 +59,11 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
     vocabList.forEach((v, idx) => {
       if (currentStage === 1) {
         const distractors = unit.vocab.filter(item => item.word !== v.word).sort(() => Math.random() - 0.5).slice(0, 3);
-        const options = [v.meaning, ...distractors.map(d => d.meaning)].sort(() => Math.random() - 0.5);
+        const options = Array.from(new Set([v.meaning, ...distractors.map(d => d.meaning)])).sort(() => Math.random() - 0.5);
         newQuestions.push({
           id: `stage1-${idx}`,
           type: ExerciseType.MULTIPLE_CHOICE,
-          question: `Từ "${v.word}" (${v.pronunciation}) có nghĩa là gì?`,
+          question: `"${v.word}" (${v.pronunciation}) có nghĩa là gì?`,
           options,
           answer: v.meaning,
           explanation: `"${v.word}" = "${v.meaning}"`,
@@ -65,7 +73,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
         const wordClean = v.word.replace(/\s/g, ''); 
         const charIndex = Math.floor(Math.random() * (wordClean.length - 1));
         const missingChar = wordClean[charIndex];
-        const displayWord = v.word.split('').map((c, i) => {
+        const displayWord = v.word.split('').map((c) => {
            if (c.toLowerCase() === missingChar.toLowerCase()) return '_';
            return c;
         }).join('');
@@ -96,7 +104,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
         newQuestions.push({
           id: `stage4-${idx}`,
           type: ExerciseType.FILL_BLANK,
-          question: `Hãy gõ từ tiếng Anh cho nghĩa: "${v.meaning}" (${v.pronunciation})`,
+          question: `Gõ từ tiếng Anh cho nghĩa: "${v.meaning}" (${v.pronunciation})`,
           answer: v.word,
           explanation: `Đáp án: ${v.word}`,
           word: v.word
@@ -110,16 +118,13 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
 
   useEffect(() => { 
     generateStageQuestions(stage); 
-    if (stage > 1) {
-      audioService.playLevelUp();
-    }
+    if (stage > 1) audioService.playLevelUp();
   }, [stage, generateStageQuestions]);
 
   const handleAnswer = (answer: string) => {
-    if (feedback) return;
+    if (feedback || !questions[currentIndex]) return;
     const currentQ = questions[currentIndex];
     const isCorrect = answer.toLowerCase().trim() === (currentQ.answer as string).toLowerCase().trim();
-    
     const vocabItem = unit.vocab.find(v => v.word === currentQ.word);
 
     if (isCorrect) {
@@ -127,7 +132,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
       firework();
       setShowScoreEffect(true);
       setTimeout(() => setShowScoreEffect(false), 1000);
-      setTotalScore(s => s + 1);
+      setTotalScore(s => s + POINTS_PER_ANSWER);
       setFeedback({ 
         isCorrect: true, 
         text: CHEERING_PHRASES[Math.floor(Math.random() * CHEERING_PHRASES.length)],
@@ -155,63 +160,62 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
       if (stage < TOTAL_STAGES) {
         setStage(s => s + 1);
       } else {
-        onFinish(totalScore, mode === 'certificate' ? 100 : TOTAL_STAGES * QUESTIONS_PER_STAGE);
+        onFinish(totalScore, (mode === 'certificate' ? 100 : TOTAL_STAGES * QUESTIONS_PER_STAGE) * POINTS_PER_ANSWER);
       }
     }
   };
 
-  if (questions.length === 0) return (
-    <div className="text-center p-20">
-      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-blue-900 font-bold animate-pulse text-2xl">🚀 Đang nạp thử thách...</p>
-    </div>
-  );
+  // Safe access check to prevent "Cannot read properties of undefined"
+  if (questions.length === 0 || !questions[currentIndex]) {
+    return (
+      <div className="flex flex-col items-center justify-center p-10 glass-panel rounded-3xl animate-pulse">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="font-bold text-blue-900">Chuẩn bị thử thách...</p>
+      </div>
+    );
+  }
 
   const currentQ = questions[currentIndex];
-  const totalLimit = mode === 'certificate' ? 100 : TOTAL_STAGES * QUESTIONS_PER_STAGE;
 
   return (
-    <div className="w-full max-w-2xl px-4 py-8 relative">
+    <div className="w-full max-w-lg px-4 py-4 relative flex flex-col min-h-[80vh] mobile-card">
       {showScoreEffect && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100]">
-          <span className="text-5xl font-black text-orange-500 animate-score flex items-center gap-2 drop-shadow-lg bg-white/80 px-6 py-2 rounded-full border-4 border-orange-200">
-            <i className="fa-solid fa-star"></i> +1!
+          <span className="text-6xl font-black text-pink-500 animate-score flex items-center gap-2 drop-shadow-2xl bg-white px-8 py-3 rounded-full border-4 border-pink-100">
+            <i className="fa-solid fa-crown text-yellow-400"></i> +10
           </span>
         </div>
       )}
 
-      <div className="flex justify-between mb-8 gap-1">
+      <div className="flex justify-between mb-4 gap-2">
         {[1, 2, 3, 4].map(s => (
           <div key={s} className="flex-1 flex flex-col items-center">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black shadow-lg transition-all transform ${stage === s ? 'bg-orange-500 text-white scale-110 border-2 border-white' : stage > s ? 'bg-green-500 text-white' : 'bg-blue-100 text-blue-400 opacity-50'}`}>
-              {stage > s ? <i className="fa-solid fa-check"></i> : s}
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black shadow-md transition-all ${stage === s ? 'bg-blue-600 text-white scale-110 border-2 border-white' : stage > s ? 'bg-green-500 text-white' : 'bg-blue-50 text-blue-200'}`}>
+              {stage > s ? <i className="fa-solid fa-check text-xs"></i> : s}
             </div>
-            <span className={`text-[9px] mt-1 font-black uppercase ${stage >= s ? 'text-blue-700' : 'text-blue-300'}`}>
-              {s === 1 ? 'Khởi động' : s === 2 ? 'Tăng tốc' : s === 3 ? 'Siêu cấp' : 'Về đích'}
-            </span>
           </div>
         ))}
       </div>
 
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-black text-blue-600 uppercase bg-white/60 px-4 py-2 rounded-full shadow-sm border border-blue-100">
-          Chặng {stage}/4 • Câu {currentIndex + 1} / {QUESTIONS_PER_STAGE}
+        <span className="text-[10px] font-black text-blue-600 uppercase bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-50">
+          Câu {currentIndex + 1} / {QUESTIONS_PER_STAGE}
         </span>
-        <div className="flex items-center gap-2 bg-orange-100 px-5 py-2 rounded-full border-2 border-orange-200">
-           <i className="fa-solid fa-fire text-orange-500"></i>
-           <span className="text-orange-700 font-black">{totalScore} / {totalLimit}</span>
+        <div className="flex items-center gap-2 bg-pink-50 px-4 py-1.5 rounded-full border-2 border-pink-100">
+           <i className="fa-solid fa-star text-pink-400 text-xs"></i>
+           <span className="text-pink-600 font-black text-sm">{totalScore}</span>
         </div>
       </div>
 
-      <div className="glass-panel p-8 rounded-[2.5rem] shadow-2xl card-3d border-4 border-white min-h-[500px] flex flex-col relative overflow-hidden">
-        <div className="text-center mb-8 relative z-10">
-          <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 block">Unit {unit.id}: {unit.title}</span>
-          <h2 className="text-xl font-black text-blue-900 leading-tight">{currentQ.question}</h2>
+      <div className="glass-panel p-6 rounded-[2.5rem] shadow-xl border-4 border-white flex flex-col flex-grow relative overflow-hidden">
+        <div className="text-center mb-6">
+          <span className="text-[8px] font-black text-blue-300 uppercase tracking-widest mb-1 block">Unit {unit.id} • {unit.title}</span>
+          <h2 className="text-lg font-black text-blue-900 leading-tight">{currentQ.question}</h2>
         </div>
 
-        <div className="flex-grow flex flex-col justify-center gap-4">
+        <div className="flex-grow flex flex-col justify-center gap-3">
           {currentQ.type === ExerciseType.MULTIPLE_CHOICE && (
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-2.5">
               {currentQ.options?.map((opt, i) => {
                 const color = ANSWER_COLORS[i % ANSWER_COLORS.length];
                 return (
@@ -219,15 +223,15 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                     key={i}
                     onClick={() => handleAnswer(opt)}
                     disabled={!!feedback}
-                    className={`group p-4 rounded-2xl text-left font-bold border-b-4 transition-all transform flex items-center gap-4
+                    className={`group p-4 rounded-2xl text-left font-bold border-b-4 transition-all flex items-center gap-3
                       ${feedback 
-                        ? (opt === currentQ.answer ? 'bg-green-500 border-green-700 text-white scale-105' : 'bg-gray-100 border-gray-300 text-gray-400 opacity-50') 
-                        : `${color.bg} ${color.shadow} ${color.text} hover:scale-[1.02] active:scale-95`}`}
+                        ? (opt === currentQ.answer ? 'bg-green-500 border-green-700 text-white scale-[1.02]' : 'bg-gray-50 border-gray-200 text-gray-300') 
+                        : `${color.bg} ${color.shadow} ${color.text} active:translate-y-1 active:border-b-0`}`}
                   >
-                    <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg font-black bg-white/20">
+                    <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-black bg-white/20">
                       {String.fromCharCode(65 + i)}
                     </span>
-                    <span className="text-lg">{opt}</span>
+                    <span className="text-sm">{opt}</span>
                   </button>
                 );
               })}
@@ -235,7 +239,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
           )}
 
           {currentQ.type === ExerciseType.FILL_BLANK && (
-            <div className="flex flex-col items-center gap-8">
+            <div className="flex flex-col items-center gap-6">
               <input 
                 type="text" 
                 autoFocus
@@ -244,13 +248,12 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                 onKeyDown={(e) => e.key === 'Enter' && handleAnswer(fillValue)}
                 placeholder="..."
                 disabled={!!feedback}
-                className={`w-full max-w-sm text-center px-6 py-5 rounded-[1.5rem] border-4 outline-none font-black text-3xl uppercase tracking-[0.1em] shadow-inner transition-all
-                   ${feedback ? (feedback.isCorrect ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700') : 'border-blue-200 bg-white focus:border-blue-500 text-blue-900'}`}
+                className="w-full text-center px-6 py-4 rounded-2xl border-4 outline-none font-black text-2xl uppercase tracking-widest transition-all border-blue-100 bg-white focus:border-blue-500 text-blue-900"
               />
               {!feedback && (
                 <button 
                   onClick={() => handleAnswer(fillValue)}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-12 py-4 rounded-2xl font-black shadow-xl hover:scale-105 transition-all active:scale-95"
+                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg active:translate-y-1"
                 >
                   Xác nhận <i className="fa-solid fa-paper-plane ml-2"></i>
                 </button>
@@ -260,27 +263,24 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
         </div>
 
         {feedback && (
-          <div className={`mt-6 p-6 rounded-[2rem] border-2 transition-all shadow-xl ${feedback.isCorrect ? 'bg-green-50 border-green-200 text-green-700' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
-            <div className="flex items-center gap-4">
-              <div className={`text-4xl ${feedback.isCorrect ? 'text-green-500' : 'text-orange-500'}`}>
-                <i className={feedback.isCorrect ? "fa-solid fa-circle-check" : "fa-solid fa-circle-xmark"}></i>
+          <div className={`mt-6 p-5 rounded-3xl border-2 transition-all shadow-lg ${feedback.isCorrect ? 'bg-green-50 border-green-100' : 'bg-pink-50 border-pink-100'}`}>
+            <div className="flex items-center gap-3">
+              <div className={`text-3xl ${feedback.isCorrect ? 'text-green-500' : 'text-pink-400'}`}>
+                <i className={feedback.isCorrect ? "fa-solid fa-circle-check" : "fa-solid fa-circle-info"}></i>
               </div>
-              <div className="text-left flex-grow">
-                <p className="text-xl font-black">{feedback.text}</p>
-                {feedback.explanation && <p className="text-xs font-bold mt-1 opacity-80 italic">{feedback.explanation}</p>}
+              <div className="text-left">
+                <p className="text-sm font-black text-blue-900">{feedback.text}</p>
+                {feedback.explanation && <p className="text-[10px] font-bold text-blue-400 mt-0.5">{feedback.explanation}</p>}
               </div>
             </div>
             
-            {/* Tích hợp AI Tutor */}
-            {feedback.word && feedback.meaning && (
-              <AITutor word={feedback.word} meaning={feedback.meaning} />
-            )}
+            {feedback.word && feedback.meaning && <AITutor word={feedback.word} meaning={feedback.meaning} />}
 
             <button 
               onClick={nextQuestion}
-              className={`mt-4 w-full py-4 rounded-xl font-black text-white shadow-lg transition-all ${feedback.isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+              className={`mt-4 w-full py-3.5 rounded-xl font-black text-white shadow-md ${feedback.isCorrect ? 'bg-green-500' : 'bg-blue-600'}`}
             >
-              Câu tiếp theo <i className="fa-solid fa-chevron-right ml-2"></i>
+              Tiếp tục <i className="fa-solid fa-chevron-right ml-1"></i>
             </button>
           </div>
         )}

@@ -11,42 +11,44 @@ interface UnitSelectionProps {
 const UnitSelection: React.FC<UnitSelectionProps> = ({ grade, onSelect }) => {
   const units = UNITS_DATA[grade];
 
-  if (units.length === 0) {
-    return (
-      <div className="text-center p-8 glass-panel rounded-[2rem] animate-float max-w-md">
-        <i className="fa-solid fa-hourglass-start text-5xl text-blue-400 mb-4"></i>
-        <h2 className="text-2xl font-bold text-blue-900 mb-2">Đang cập nhật...</h2>
-        <p className="text-blue-600">Dữ liệu từ vựng lớp {grade} đang được chuẩn bị bạn nhé!</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full max-w-5xl px-4 py-8">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-black text-blue-900 mb-2 tracking-tight">CHỌN UNIT CẦN ÔN TẬP</h1>
-        <p className="text-lg text-blue-500 font-medium">Chương trình Tiếng Anh Global Success - Lớp {grade}</p>
+    <div className="w-full max-w-lg px-4 py-6 mb-10">
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-black text-blue-900 mb-1">CHỌN UNIT HỌC</h1>
+        <div className="inline-block px-4 py-1 bg-blue-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest">
+          Chương trình lớp {grade}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="space-y-4">
         {units.map((unit) => (
           <button 
             key={unit.id}
             onClick={() => onSelect(unit)}
-            className="group relative overflow-hidden glass-panel p-6 rounded-3xl border-2 border-white text-left card-3d hover:border-blue-400 transition-all"
+            className="w-full glass-panel p-5 rounded-[2rem] border-2 border-white flex items-center justify-between group active:scale-95 transition-all text-left"
           >
-            <div className="absolute -top-4 -right-4 w-20 h-20 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors z-0"></div>
-            <div className="relative z-10">
-              <span className="inline-block px-3 py-1 bg-blue-500 text-white text-[10px] font-black rounded-full mb-3 uppercase tracking-wider">UNIT {unit.id}</span>
-              <h3 className="text-lg font-bold text-blue-900 mb-1 group-hover:text-blue-700 leading-tight">{unit.title}</h3>
-              <p className="text-blue-400 text-xs font-medium">{unit.vocab.length} từ vựng</p>
-              <div className="mt-6 flex items-center text-blue-500 font-black text-[10px] uppercase tracking-widest">
-                Vào học <i className="fa-solid fa-chevron-right ml-2 group-hover:translate-x-2 transition-transform"></i>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 font-black text-sm border-2 border-white group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                {unit.id}
               </div>
+              <div>
+                <h3 className="font-bold text-blue-900 group-hover:text-blue-600 transition-colors leading-tight">{unit.title}</h3>
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-tighter mt-0.5">{unit.vocab.length} từ vựng mới</p>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-300 group-hover:bg-blue-600 group-hover:text-white transition-all">
+              <i className="fa-solid fa-chevron-right text-xs"></i>
             </div>
           </button>
         ))}
       </div>
+      
+      {units.length === 0 && (
+        <div className="text-center p-12 glass-panel rounded-[2rem]">
+          <i className="fa-solid fa-cloud-moon text-4xl text-blue-200 mb-3"></i>
+          <p className="text-blue-400 font-bold italic">Dữ liệu đang được cập nhật...</p>
+        </div>
+      )}
     </div>
   );
 };
