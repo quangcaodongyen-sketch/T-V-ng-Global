@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Grade, StudentInfo, Unit, ExerciseType } from './types';
+import React, { useState } from 'react';
+import { Grade, StudentInfo, Unit } from './types';
 import LoginScreen from './components/LoginScreen';
 import UnitSelection from './components/UnitSelection';
 import GameEngine from './components/GameEngine';
@@ -42,35 +42,40 @@ const App: React.FC = () => {
     setIsGameOver(false);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col relative pb-16">
-      {student && <Header student={student} onLogout={handleLogout} onBack={handleBackToMenu} />}
-      
-      <main className="flex-grow flex items-center justify-center p-4">
-        {!student ? (
-          <LoginScreen onLogin={handleLogin} />
-        ) : !selectedUnit ? (
-          <UnitSelection grade={student.grade} onSelect={handleSelectUnit} />
-        ) : isGameOver ? (
-          <Certificate 
-            student={student} 
-            unit={selectedUnit} 
-            score={score} 
-            total={totalQuestions} 
-            onBack={handleBackToMenu} 
-          />
-        ) : (
-          <GameEngine 
-            unit={selectedUnit} 
-            mode={student.mode} 
-            onFinish={handleFinishGame} 
-          />
-        )}
-      </main>
+  try {
+    return (
+      <div className="min-h-screen flex flex-col relative pb-16">
+        {student && <Header student={student} onLogout={handleLogout} onBack={handleBackToMenu} />}
+        
+        <main className="flex-grow flex items-center justify-center p-4">
+          {!student ? (
+            <LoginScreen onLogin={handleLogin} />
+          ) : !selectedUnit ? (
+            <UnitSelection grade={student.grade} onSelect={handleSelectUnit} />
+          ) : isGameOver ? (
+            <Certificate 
+              student={student} 
+              unit={selectedUnit} 
+              score={score} 
+              total={totalQuestions} 
+              onBack={handleBackToMenu} 
+            />
+          ) : (
+            <GameEngine 
+              unit={selectedUnit} 
+              mode={student.mode} 
+              onFinish={handleFinishGame} 
+            />
+          )}
+        </main>
 
-      <Footer />
-    </div>
-  );
+        <Footer />
+      </div>
+    );
+  } catch (error) {
+    console.error("Render Error:", error);
+    return <div className="p-10 text-red-500 font-bold">Cổng học tập đang gặp sự cố nhỏ, vui lòng tải lại trang (F5) bạn nhé!</div>;
+  }
 };
 
 export default App;
