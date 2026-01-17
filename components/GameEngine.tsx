@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Unit, ExerciseType, Question } from '../types';
 import { CHEERING_PHRASES, ENCOURAGING_PHRASES } from '../constants';
 import { audioService } from '../services/audioService';
+import AITutor from './AITutor';
 
 interface GameEngineProps {
   unit: Unit;
@@ -22,7 +22,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
-  const [feedback, setFeedback] = useState<{ isCorrect: boolean; text: string; explanation?: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ isCorrect: boolean; text: string; explanation?: string; word?: string; meaning?: string } | null>(null);
   const [fillValue, setFillValue] = useState('');
   const [showScoreEffect, setShowScoreEffect] = useState(false);
 
@@ -120,26 +120,28 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
     const currentQ = questions[currentIndex];
     const isCorrect = answer.toLowerCase().trim() === (currentQ.answer as string).toLowerCase().trim();
     
+    const vocabItem = unit.vocab.find(v => v.word === currentQ.word);
+
     if (isCorrect) {
-      if (Math.random() > 0.7) {
-        audioService.playFunny();
-      } else {
-        audioService.playSuccess();
-      }
-      
+      audioService.playSuccess();
       firework();
       setShowScoreEffect(true);
       setTimeout(() => setShowScoreEffect(false), 1000);
       setTotalScore(s => s + 1);
-      setFeedback({ isCorrect: true, text: CHEERING_PHRASES[Math.floor(Math.random() * CHEERING_PHRASES.length)] });
+      setFeedback({ 
+        isCorrect: true, 
+        text: CHEERING_PHRASES[Math.floor(Math.random() * CHEERING_PHRASES.length)],
+        word: currentQ.word,
+        meaning: vocabItem?.meaning
+      });
     } else {
-      // Phát âm thanh nhắc khéo khi sai
       audioService.playWrong();
-      
       setFeedback({ 
         isCorrect: false, 
         text: ENCOURAGING_PHRASES[Math.floor(Math.random() * ENCOURAGING_PHRASES.length)], 
-        explanation: currentQ.explanation 
+        explanation: currentQ.explanation,
+        word: currentQ.word,
+        meaning: vocabItem?.meaning
       });
     }
   };
@@ -161,7 +163,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
   if (questions.length === 0) return (
     <div className="text-center p-20">
       <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-blue-900 font-bold animate-pulse text-2xl">🚀 Đang nạp 100 thử thách...</p>
+      <p className="text-blue-900 font-bold animate-pulse text-2xl">🚀 Đang nạp thử thách...</p>
     </div>
   );
 
@@ -268,11 +270,17 @@ const GameEngine: React.FC<GameEngineProps> = ({ unit, mode, onFinish }) => {
                 {feedback.explanation && <p className="text-xs font-bold mt-1 opacity-80 italic">{feedback.explanation}</p>}
               </div>
             </div>
+            
+            {/* Tích hợp AI Tutor */}
+            {feedback.word && feedback.meaning && (
+              <AITutor word={feedback.word} meaning={feedback.meaning} />
+            )}
+
             <button 
               onClick={nextQuestion}
               className={`mt-4 w-full py-4 rounded-xl font-black text-white shadow-lg transition-all ${feedback.isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-500 hover:bg-orange-600'}`}
             >
-              Tiếp tục
+              Câu tiếp theo <i className="fa-solid fa-chevron-right ml-2"></i>
             </button>
           </div>
         )}
